@@ -56,7 +56,6 @@ export default function PlanAdmin() {
 
   const openAdd = () => {
     setEditPlan(null);
-    setFormError("");
     setForm({
       planName: "",
       speedLabel: "",
@@ -70,46 +69,15 @@ export default function PlanAdmin() {
 
   const openEdit = (p: Plan) => {
     setEditPlan(p);
-    setFormError("");
-    setForm({
-      ...p,
-      speedLabel: p.speedLabel.replace(/MBPS$/i, "").trim(),
-      dataLimitLabel: p.dataLimitLabel.toLowerCase() === "unlimited internet" ? "unlimited" : p.dataLimitLabel.replace(/GB$/i, "").trim(),
-    });
+    setForm({ ...p });
     setShowForm(true);
   };
 
-  const [formError, setFormError] = useState("");
-
   const savePlan = async () => {
-    setFormError("");
-
-    const rawSpeed = form.speedLabel.trim();
-    const rawData = form.dataLimitLabel.trim();
-
-    // Validate speed — must be a number
-    if (!rawSpeed || isNaN(Number(rawSpeed))) {
-      setFormError("Speed must be a number (e.g. 300, 500, 1000).");
-      return;
-    }
-
-    // Validate data — must be a number or 'unlimited'
-    const isUnlimited = rawData.toLowerCase() === "unlimited";
-    if (!rawData || (!isUnlimited && isNaN(Number(rawData)))) {
-      setFormError("Data must be a number (e.g. 60) or 'Unlimited'.");
-      return;
-    }
-
-    const payload = {
-      ...form,
-      speedLabel: rawSpeed + "MBPS",
-      dataLimitLabel: isUnlimited ? "Unlimited Internet" : rawData + "GB",
-    };
-
     if (editPlan) {
-      await api.put(`/api/admin/plans/${editPlan.planId}`, payload);
+      await api.put(`/api/admin/plans/${editPlan.planId}`, form);
     } else {
-      await api.post("/api/admin/plans", payload);
+      await api.post("/api/admin/plans", form);
     }
     setShowForm(false);
     loadPlans();
@@ -189,17 +157,15 @@ export default function PlanAdmin() {
             }
           />
           <Input
-            label="Speed (MBPS)"
+            label="Speed"
             value={form.speedLabel}
-            placeholder="e.g. 300"
             onChange={(e) =>
               setForm({ ...form, speedLabel: e.target.value })
             }
           />
           <Input
-            label="Data Limit (GB or Unlimited)"
+            label="Data Limit"
             value={form.dataLimitLabel}
-            placeholder="e.g. 60 or Unlimited"
             onChange={(e) =>
               setForm({ ...form, dataLimitLabel: e.target.value })
             }
@@ -233,7 +199,6 @@ export default function PlanAdmin() {
               }
             />
           )}
-          {formError && <p style={{ fontSize: "13px", color: "#dc2626", margin: "4px 0 0 0" }}>{formError}</p>}
         </div>
       </Modal>
     </PageWrapper>
